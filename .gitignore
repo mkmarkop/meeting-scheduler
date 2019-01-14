@@ -6,7 +6,7 @@
 ### Jade ###
 APDescription.txt
 MTPs-Main-Container.txt
-.build/**
+build/
 
 ### Intellij ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and WebStorm
