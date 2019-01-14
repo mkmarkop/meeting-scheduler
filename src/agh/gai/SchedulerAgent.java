@@ -15,8 +15,11 @@ public class SchedulerAgent extends Agent {
     private Set<AID> contacts;
     private Calendar calendar;
 
+    private static final int CALENDAR_SIZE = 24;
+
     public SchedulerAgent() {
         contacts = new HashSet<>();
+        calendar = new Calendar(CALENDAR_SIZE);
     }
 
     @Override
@@ -29,6 +32,8 @@ public class SchedulerAgent extends Agent {
         sd.setName("JADE-scheduling");
         template.addServices(sd);
 
+        System.out.println("Agent " + getAID().getLocalName() + " calendar: " + calendar.toString());
+
         try {
             DFService.register(this, template);
         } catch (FIPAException fe) {
@@ -37,37 +42,35 @@ public class SchedulerAgent extends Agent {
         }
         System.out.println("Agent " + getAID().getLocalName() + " registered itself.");
 
-        addBehaviour(new MeetingBehaviour());
+        addBehaviour(new OneShotBehaviour(this) {
+            @Override
+            public void action() {
+                DFAgentDescription template = new DFAgentDescription();
+                ServiceDescription sd = new ServiceDescription();
+                sd.setType("scheduling");
+                template.addServices(sd);
+
+                try {
+                    DFAgentDescription[] results = DFService.search(myAgent, template);
+                    for (DFAgentDescription description : results) {
+                        if (description.getName().equals(myAgent.getAID()))
+                            continue;
+
+                        contacts.add(description.getName());
+                        System.out.println("Agent " + myAgent.getAID().getLocalName() + " added Agent "
+                                + description.getName().getLocalName() + " to contact list.");
+                    }
+                } catch (FIPAException fe) {
+                    fe.printStackTrace();
+                    System.exit(-1);
+                }
+                System.out.println("Agent " + getAID().getLocalName() + " found " + contacts.size() + " contacts.");
+            }
+        });
     }
 
     @Override
     protected void takeDown() {
         System.out.println("Agent " + getAID().getLocalName() + " terminated.");
-    }
-
-    private class MeetingBehaviour extends OneShotBehaviour {
-        @Override
-        public void action() {
-            DFAgentDescription template = new DFAgentDescription();
-            ServiceDescription sd = new ServiceDescription();
-            sd.setType("scheduling");
-            template.addServices(sd);
-
-            try {
-                DFAgentDescription[] results = DFService.search(myAgent, template);
-                for (DFAgentDescription description : results) {
-                    if (description.getName().equals(myAgent.getAID()))
-                        continue;
-
-                    contacts.add(description.getName());
-                    System.out.println("Agent " + myAgent.getAID().getLocalName() + " added Agent "
-                            + description.getName().getLocalName() + " to contact list.");
-                }
-            } catch (FIPAException fe) {
-                fe.printStackTrace();
-                System.exit(-1);
-            }
-            System.out.println("Agent " + getAID().getLocalName() + " found " + contacts.size() + " contacts.");
-        }
     }
 }
