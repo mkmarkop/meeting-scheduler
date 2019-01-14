@@ -20,7 +20,7 @@
     <target name="run" description="create agents">
         <java fork="true" classpath="jade/lib/jade.jar;build" classname="jade.Boot">
             <arg value="-gui"/>
-            <arg value="agent1:agh.gai.SchedulerAgent;agent2:agh.gai.SchedulerAgent"/>
+            <arg value="agent1:agh.gai.SchedulerAgent;agent2:agh.gai.SchedulerAgent;agent3:agh.gai.SchedulerAgent"/>
         </java>
     </target>
 </project>
