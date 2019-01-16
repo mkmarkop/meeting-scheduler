@@ -1,14 +1,12 @@
 package agh.gai;
 
-import jade.core.AID;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 public class Slot {
     private double preference;
-    private Set<AID> attendants;
+    private boolean isAvailable;
 
     public Slot() {
         this(0);
@@ -16,7 +14,7 @@ public class Slot {
 
     public Slot(double preference) {
         this.preference = preference;
-        this.attendants = new HashSet<>();
+        this.isAvailable = true;
     }
 
     public double getPreference() {
@@ -27,11 +25,11 @@ public class Slot {
         this.preference = preference;
     }
 
-    public Set<AID> getAttendants() {
-        return Collections.unmodifiableSet(this.attendants);
+    public boolean getIsAvailable() {
+        return isAvailable;
     }
 
-    public void addAttendant(AID attendant) {
-        this.attendants.add(attendant);
+    public void setIsAvailable(boolean isAvailable) {
+        this.isAvailable = isAvailable;
     }
 }
