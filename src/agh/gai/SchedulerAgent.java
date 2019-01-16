@@ -30,6 +30,8 @@ public class SchedulerAgent extends Agent {
 
     private static final int CALENDAR_SIZE = 24;
 
+    private static final int MEETING_INTERVAL = 4000;
+
     public SchedulerAgent() {
         contacts = new HashSet<>();
         calendar = new Calendar(CALENDAR_SIZE);
@@ -39,9 +41,6 @@ public class SchedulerAgent extends Agent {
 
     @Override
     protected void setup() {
-
-        int meetingInterval = 20000;
-
         System.out.println("Agent " + getAID().getLocalName() + " initialized.");
         DFAgentDescription template = new DFAgentDescription();
         template.setName(getAID());
@@ -86,7 +85,7 @@ public class SchedulerAgent extends Agent {
             }
         });
 
-        addBehaviour(new TickerBehaviour(this, meetingInterval) {
+        addBehaviour(new TickerBehaviour(this, MEETING_INTERVAL) {
             @Override
             public void onTick() {
                 if (contacts.size() != 0) {
@@ -126,7 +125,7 @@ public class SchedulerAgent extends Agent {
                         myAgent.send(msg);
 
                         System.out.println("Agent " + getAID().getLocalName() +
-                                " is scheduling a new meeting with " + nbOfAgentsToContact + " contacts.");
+                                " is scheduling a new meeting " + newMeeting.getId() + " with " + nbOfAgentsToContact + " contacts.");
                     }
                 }
             }
@@ -164,11 +163,11 @@ public class SchedulerAgent extends Agent {
         public void action() {
             MessageTemplate mt = MessageTemplate.or(MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL),
                     MessageTemplate.MatchPerformative(ACLMessage.FAILURE));
-            mt = MessageTemplate.or(mt, MessageTemplate.MatchPerformative(ACLMessage.INFORM));
             ACLMessage msg = myAgent.receive(mt);
 
             if (msg != null) {
 
+                System.out.println(msg.getContent());
                 String[] infos = msg.getContent().split(" ");
 
                 int meetingId = Integer.parseInt(infos[0]);
@@ -181,10 +180,10 @@ public class SchedulerAgent extends Agent {
 
                 if (msg.getPerformative() == ACLMessage.ACCEPT_PROPOSAL) {
                     ((SchedulerAgent) myAgent).organisedMeetings.get(meetingId).updatePossibleSlotSum(slot, preferenceForSlot);
-                }
-
-                if (msg.getPerformative() == ACLMessage.FAILURE) {
+                    System.out.println("Agent " + msg.getSender() + " can come on slot " + slot + " for meeting " + meetingId);
+                } else if (msg.getPerformative() == ACLMessage.FAILURE) {
                     ((SchedulerAgent) myAgent).organisedMeetings.get(meetingId).removePossibleSlot(slot);
+                    System.out.println("Agent " + msg.getSender() + " can not come on slot " + slot + " for meeting " + meetingId);
 
                     ACLMessage newMsg = new ACLMessage(ACLMessage.INFORM);
                     for (AID agent : ((SchedulerAgent) myAgent).organisedMeetings.get(meetingId).getAttendants()) {
@@ -196,9 +195,9 @@ public class SchedulerAgent extends Agent {
 
                 }
 
-                if ((Object) proposedSlot != null)
+                if (proposedSlot != -1)
                     if (((SchedulerAgent) myAgent).calendar.getSlots().get(proposedSlot).getIsAvailable()) {
-                        if (((Object) ((SchedulerAgent) myAgent).organisedMeetings.get(meetingId).getPossibleSlotSum(proposedSlot)) == null) {
+                        if (((SchedulerAgent) myAgent).organisedMeetings.get(meetingId) == null) {
                             ((SchedulerAgent) myAgent).organisedMeetings.get(meetingId).addPossibleSlot(proposedSlot, preferenceForProposedSlot);
                             ((SchedulerAgent) myAgent).organisedMeetings.get(meetingId).updatePossibleSlotSum(proposedSlot, ((SchedulerAgent) myAgent).calendar.getSlots().get(proposedSlot).getPreference());
 
@@ -224,8 +223,7 @@ public class SchedulerAgent extends Agent {
         }
 
         public boolean done() {
-
-            return (contactedAgentsWithNoMoreSlot == nbOfContactedAgents);
+            return false; // this should be changed
         }
     }
 
@@ -242,6 +240,9 @@ public class SchedulerAgent extends Agent {
 
                 int meetingId = Integer.parseInt(infos[0]);
                 int proposedSlot = Integer.parseInt(infos[1]);
+
+                System.out.println("Agent " + myAgent.getAID().getLocalName() + " received proposal for meeting "
+                        + meetingId + " from " + msg.getSender().getLocalName() );
 
                 if (((SchedulerAgent) myAgent).proposedMeetings.get(meetingId) == null)
                     ((SchedulerAgent) myAgent).proposedMeetings.put(meetingId, new ArrayList<>());
@@ -265,13 +266,8 @@ public class SchedulerAgent extends Agent {
                             ((SchedulerAgent) myAgent).calendar.getSlots().indexOf(preferredAvailableSlot) + " "
                             + preferenceForPreferredAvailableSlot);
                 } else {
-                    ACLMessage newMsg = new ACLMessage(ACLMessage.INFORM);
-                    newMsg.addReceiver(msg.getSender());
-                    newMsg.setContent(meetingId + " " + proposedSlot);
-                    myAgent.send(newMsg);
-
                     reply.setContent(meetingId + " " + proposedSlot + " " +
-                            preferenceForProposedSlot + " " + null + " " + null); // weird
+                            preferenceForProposedSlot + " -1 -1");
                 }
 
                 myAgent.send(reply);
