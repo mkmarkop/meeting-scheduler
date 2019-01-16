@@ -10,13 +10,13 @@ public class Meeting {
 	private static int nbOfMeetings = 0;
 	private int id = 0;
 	private Set<AID>  attendants;
-	private HashMap possibleSlots;
+	private HashMap<Integer, Double> possibleSlots;
 	
 	public Meeting(Set<AID>  attendants){
 		nbOfMeetings ++;
 		id = nbOfMeetings;
 		this.attendants = attendants;
-		possibleSlots = new HashMap();
+		possibleSlots = new HashMap<>();
 	}
 	
 		public int getId(){
@@ -27,8 +27,8 @@ public class Meeting {
 		return attendants;
 	}
 	
-	public int getPossibleSlotSum(int slotNumber){
-		return ((int) possibleSlots.get(slotNumber));
+	public double getPossibleSlotSum(int slotNumber){
+		return possibleSlots.get(slotNumber);
 	}
 	
 	public void addPossibleSlot(int slotNumber, double slotSumInit){
@@ -36,7 +36,7 @@ public class Meeting {
 	}
 	
 	public void updatePossibleSlotSum(int slotNumber, double slotSumUpdate){
-		possibleSlots.put(slotNumber, ((int) possibleSlots.get(slotNumber)) + slotSumUpdate);
+		possibleSlots.put(slotNumber, possibleSlots.get(slotNumber + slotSumUpdate));
 	}
 	
 	public void removePossibleShot(int slotNumber){
